@@ -69,7 +69,7 @@ A read-only CLI that:
 5. returns a verdict plus exit codes 0/1/2 for CI.
 
 No database access, no warehouse credentials, no dashboard, no agent, no new runtime
-dependency. Five API calls at most, one verdict, one preflight estimate.
+dependency. Two read-only API calls, one verdict, one preflight estimate.
 
 ## 5. Evidence
 
@@ -78,7 +78,25 @@ dependency. Five API calls at most, one verdict, one preflight estimate.
 - Broken scenario: exit 1, INVALID, both root causes named.
 - Fixed scenario: exit 0, TRUSTWORTHY, 98.8% chance to win.
 
-## 6. Open items
+## 6. Additional defect found in the final review
+
+**Repro:** `toggletruth check --demo --scenario fixed --expected-shares 0.5` returned
+`TRUSTWORTHY` with `p = 1.0000`.
+
+**Isolation:** two defects combined. `--expected-shares` was only applied in the live
+API branch, so demo mode ignored it entirely; and `srmPValue` indexed past a one-item
+share list, producing NaN, which satisfies neither `< 0.001` nor any error check.
+
+**Root cause:** missing input validation in a statistical check — upstream uses
+`zip(strict=True)` and would have raised.
+
+**Fix:** `srmPValue` now requires one finite positive share per variant and throws on
+a ragged list; the CLI applies `--expected-shares` in both branches and clones demo
+fixtures to avoid shared mutation. Two RED-first tests cover the direct function and
+the CLI path. 20/20 tests pass; the malformed command now exits 1 with
+`expected shares must have one value per variant (2), got 1`.
+
+## 7. Open items
 
 - Live payload shape must be captured from a self-hosted instance; Docker was not
   available in the build environment. `adaptPayload` prints the observed keys rather

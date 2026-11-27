@@ -50,6 +50,13 @@ test("srmPValue is tiny when the observed split violates the weights", () => {
   assert.ok(p < 0.001);
 });
 
+test("srmPValue rejects a ragged share list instead of returning NaN", () => {
+  assert.throws(
+    () => srmPValue([1000, 1000], [0.5]),
+    /one value per variant/,
+  );
+});
+
 test("srmPValue is undefined without traffic", () => {
   assert.equal(srmPValue([0, 0], [0.5, 0.5]), null);
 });

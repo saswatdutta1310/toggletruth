@@ -71,7 +71,9 @@ async function runCheck(flags: Flags): Promise<CliResult> {
   let input: AuditInput;
 
   if (flags.demo) {
-    input = flags.scenario === "fixed" ? fixedExperiment : brokenExperiment;
+    input = {
+      ...(flags.scenario === "fixed" ? fixedExperiment : brokenExperiment),
+    };
   } else {
     const apiUrl = stringValue(flags, "api-url");
     const token = stringValue(flags, "token");
@@ -89,10 +91,11 @@ async function runCheck(flags: Flags): Promise<CliResult> {
       payload?: unknown;
     };
     input = adaptPayload(response.payload ?? response);
-    const shares = stringValue(flags, "expected-shares");
-    if (shares) {
-      input.expectedShares = shares.split(",").map(Number);
-    }
+  }
+
+  const shares = stringValue(flags, "expected-shares");
+  if (shares) {
+    input.expectedShares = shares.split(",").map(Number);
   }
 
   const result = audit(input);

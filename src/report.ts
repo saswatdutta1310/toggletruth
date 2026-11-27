@@ -1,8 +1,6 @@
 import { formatP, type AuditResult } from "./verdict.js";
 import type { PreflightInput, PreflightResult } from "./preflight.js";
 
-const pad = (value: string, width: number) => value.padEnd(width).slice(0, width);
-
 export function renderText(result: AuditResult): string {
   const lines: string[] = [];
   lines.push(`VERDICT: ${result.verdict}`);
@@ -47,5 +45,3 @@ export function renderPreflight(
     "  Approximation: normal interval on relative lift; verify against a live run.",
   ].join("\n");
 }
-
-export { pad };

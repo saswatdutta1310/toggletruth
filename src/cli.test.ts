@@ -22,6 +22,19 @@ test("json mode emits parseable output with the verdict", async () => {
   assert.equal(parsed.verdict, "INVALID");
 });
 
+test("malformed expected shares fail loudly instead of passing the gate", async () => {
+  const result = await run([
+    "check",
+    "--demo",
+    "--scenario",
+    "fixed",
+    "--expected-shares",
+    "0.5",
+  ]);
+  assert.equal(result.exitCode, 1);
+  assert.match(result.stdout, /expected shares/);
+});
+
 test("preflight reports when traffic is insufficient", async () => {
   const result = await run([
     "preflight",

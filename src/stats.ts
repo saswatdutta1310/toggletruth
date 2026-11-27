@@ -136,6 +136,17 @@ export function srmPValue(
   observed: number[],
   expectedShares: number[],
 ): number | null {
+  // Upstream uses zip(strict=True); a ragged share list must fail, not
+  // produce NaN that quietly skips the check.
+  if (observed.length !== expectedShares.length) {
+    throw new Error(
+      `expected shares must have one value per variant (${observed.length}), got ${expectedShares.length}`,
+    );
+  }
+  if (expectedShares.some((share) => !Number.isFinite(share) || share <= 0)) {
+    throw new Error("expected shares must be finite positive numbers");
+  }
+
   const total = observed.reduce((sum, count) => sum + count, 0);
   if (
     observed.length < 2 ||

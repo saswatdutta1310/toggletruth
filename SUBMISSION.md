@@ -16,17 +16,17 @@ The rules page requires three things:
 
 ## One action only you can take
 
-The delivery grant allows pushes to `bot/` branches but forbids merging and pushing
-to `main`. All source currently lives on `bot/toggletruth-v1`; the default branch still
-contains only GitHub's starter README.
+The delivery grant forbids the assistant from pushing to `main` or merging. The local
+repository already has every file on `main`; the remote default branch still has only
+GitHub's starter README. Push it from your terminal:
 
-**Merge PR #1 before submitting**, so the default branch is the project:
-
+```bash
+cd /home/dutta/toggletruth
+git push origin main
 ```
-https://github.com/saswatdutta1310/toggletruth/pull/1
-```
 
-I cannot do this for you. After merging, the CI workflow will run on `main` too.
+Then close the now-unwanted self-PR (`gh pr close 1`), since no PR is needed for this
+submission. I cannot perform either action under the active grant.
 
 ## Demo video script (~2 min 30 sec)
 

@@ -29,19 +29,17 @@ Ported at Flagsmith commit `f4de7145` (v2.295.2). See `docs/ISSUE-ANALYSIS.md`.
 
 Requires Node 20 or newer.
 
-```bash
-npm install -g toggletruth
-```
-
-From source:
+Install from source (the npm package is not published yet):
 
 ```bash
 git clone https://github.com/saswatdutta1310/toggletruth.git
 cd toggletruth
 npm install
-npm run check       # typecheck, build, 18 tests
+npm run check       # typecheck, build, 20 tests
 npm link
 ```
+
+The package is ready to publish but has not been published to the npm registry.
 
 ## Run
 
