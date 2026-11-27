@@ -7,6 +7,9 @@ traffic split is broken and whose identities were contaminated. ToggleTruth read
 experiment results from **your** self-hosted Flagsmith, recomputes the statistics
 independently, and returns a verdict you can put in a CI gate.
 
+Submitting to Toggle Wars? See [SUBMISSION.md](SUBMISSION.md) for the required action,
+demo script and submission checklist.
+
 ## What it does
 
 - `check` — audits one experiment and returns `TRUSTWORTHY`, `INCONCLUSIVE` or `INVALID`.
