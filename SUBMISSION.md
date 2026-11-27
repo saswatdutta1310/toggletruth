@@ -36,9 +36,10 @@ submission. I cannot perform either action under the active grant.
 | 0:15–0:40 | `node dist/index.js check --demo --scenario broken`. Show `VERDICT: INVALID`, SRM `<1e-6`, 312 quarantined identities, exit code 1. |
 | 0:40–1:05 | Explain: the tool recomputes Flagsmith's own chi-squared split test and quarantine rule. Show the unstable-identifier line in app code. |
 | 1:05–1:30 | Re-run with `--scenario fixed`. Show `VERDICT: TRUSTWORTHY`, interval 5.1%–74.9%, 98.8% chance to win, exit code 0. |
-| 1:30–1:55 | `node dist/index.js preflight --baseline 0.05 --mde 0.1 --traffic 400 --days-until 2`. Show "NOT ON TRACK" and explain it answers "will this resolve by Sunday?" |
-| 1:55–2:15 | Show `--json` output, the exit-code gate and `action.yml`. |
-| 2:15–2:30 | Show the self-hosted Flagsmith instance and the two API endpoints the tool calls. Close on the repo and README. |
+| 1:30–1:45 | `node dist/index.js preflight --baseline 0.05 --mde 0.1 --traffic 400 --days-until 2`. Show "NOT ON TRACK" and explain it answers "will this resolve by Sunday?" |
+| 1:45–2:00 | `node dist/index.js exposures --demo`. Show 500 control vs 150 treatment exposures and 312 excluded identities — the unstable-identifier signal. |
+| 2:00–2:15 | Show `--json` output, the exit-code gate and `action.yml`. |
+| 2:15–2:30 | Show the self-hosted Flagsmith instance and the API endpoints the tool calls. Close on the repo and README. |
 
 Record this before Sunday. The demo is fully in-process, so it cannot fail because of
 network or Docker problems.

@@ -1,5 +1,8 @@
 # Feature research — what to add next
 
+Status: P0, P2, P5, P1 and P3 were implemented as separate commits on `main`
+(`800dd71`, `51fc724`, `c9fd343`, `5930980`, `fca3004`). P4 and P6 remain open.
+
 Retrieved 2026-11-27 22:17 IST. Question: which additions give the most Toggle Wars
 Track 03 score per hour, given the tool already works?
 

@@ -37,7 +37,7 @@ understanding.
 
 ## Verification boundary
 
-Verified in the build environment: typecheck, build, 20 unit tests, deterministic demo
+Verified in the build environment: typecheck, build, 31 unit tests, deterministic demo
 output and exit codes. **Not verified here:** a live self-hosted Flagsmith instance and
 the exact internal shape of its results payload — Docker was unavailable in the build
 environment. The adapter fails loudly rather than inventing numbers when it sees an

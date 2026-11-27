@@ -35,7 +35,7 @@ Install from source (the npm package is not published yet):
 git clone https://github.com/saswatdutta1310/toggletruth.git
 cd toggletruth
 npm install
-npm run check       # typecheck, build, 20 tests
+npm run check       # typecheck, build, 31 tests
 npm link
 ```
 
@@ -54,6 +54,18 @@ toggletruth check \
 
 The token is read from your environment; it is only placed in an outbound
 `Authorization: Token …` header. It is never logged, printed or written to disk.
+`--api-url` falls back to `FLAGSMITH_API_URL` and `--token` to `FLAGSMITH_TOKEN`,
+so a master key never has to appear in the process argument list:
+
+```bash
+export FLAGSMITH_API_URL=http://localhost:8000
+export FLAGSMITH_TOKEN=...
+toggletruth check --environment <key> --experiment 7
+```
+
+Results older than 24 hours, or results whose last refresh failed, are reported as
+INCONCLUSIVE. Use `--max-age-hours N` to change the threshold. Upstream wraps results
+as `{"results": {"payload": ...}}`; the tool unwraps that shape before auditing.
 
 ```
 VERDICT: INVALID
@@ -74,6 +86,23 @@ Add `--json` for machine-readable output.
 toggletruth check --demo --scenario broken   # exit 1, INVALID
 toggletruth check --demo --scenario fixed    # exit 0, TRUSTWORTHY
 ```
+
+### Exposures report
+
+```bash
+toggletruth exposures --demo
+toggletruth exposures --environment <key> --experiment 7
+```
+
+Reports new identities per variant, quarantined identities and time buckets from
+Flagsmith's `ExposuresSummary`. A nonzero excluded count means identities saw more
+than one variant — `check` classifies that as INVALID.
+
+### Configured weights
+
+`--auto-shares` reads `default_percentage_allocation` from the experiment detail
+endpoint instead of requiring `--expected-shares`. It is opt-in because option order
+must be confirmed against a live results payload.
 
 ### Preflight
 
@@ -97,8 +126,9 @@ ToggleTruth has no independent data source. It calls these management API endpoi
 
 - `GET /api/v1/environments/{key}/experiments/{id}/results/`
 - `GET /api/v1/environments/{key}/experiments/{id}/exposures/`
+- `GET /api/v1/environments/{key}/experiments/{id}/` (only with `--auto-shares`)
 
-Both are documented in the checked-in `openapi.yaml` of Flagsmith. The verdict engine
+These are documented in the checked-in `openapi.yaml` of Flagsmith. The verdict engine
 reproduces upstream formulas so an audit agrees with the platform by construction.
 Remove Flagsmith and the tool has nothing to audit.
 
