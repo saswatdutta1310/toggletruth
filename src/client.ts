@@ -108,6 +108,59 @@ export function configuredShares(response: unknown): number[] | undefined {
   return allocations.map((value) => value / total);
 }
 
+export interface ExposureReport {
+  perVariant: Record<string, number>;
+  excluded: number;
+  buckets: number;
+  asOf?: string;
+}
+
+export function unwrapExposures(response: unknown): unknown {
+  const root = asRecord(response);
+  if (!root) return response;
+  const wrapper = asRecord(root.exposures);
+  if (wrapper && "payload" in wrapper) return wrapper.payload;
+  if ("payload" in root) return root.payload;
+  if (root.exposures !== undefined) return root.exposures;
+  return response;
+}
+
+export function adaptExposures(payload: unknown): ExposureReport {
+  const root = asRecord(payload);
+  const timeseries = root ? asRecord(root.timeseries) : null;
+  const points = timeseries?.points;
+  if (!root || !Array.isArray(points)) {
+    const keys = root ? Object.keys(root).join(", ") : "none";
+    throw new Error(
+      `Unsupported exposures payload. Top-level keys: ${keys}. Please open an issue with these keys.`,
+    );
+  }
+
+  const perVariant: Record<string, number> = {};
+  for (const point of points) {
+    const pointRecord = asRecord(point);
+    const identities = pointRecord ? asRecord(pointRecord.new_identities) : null;
+    if (!identities) continue;
+    for (const [variant, count] of Object.entries(identities)) {
+      const value = Number(count);
+      if (Number.isFinite(value)) {
+        perVariant[variant] = (perVariant[variant] ?? 0) + value;
+      }
+    }
+  }
+  if (Object.keys(perVariant).length === 0) {
+    throw new Error("Unsupported exposures payload: no variant counts found.");
+  }
+
+  const excluded = Number(root.excluded_identities ?? 0);
+  return {
+    perVariant,
+    excluded: Number.isFinite(excluded) ? excluded : 0,
+    buckets: points.length,
+    asOf: typeof root.as_of === "string" ? root.as_of : undefined,
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null
     ? (value as Record<string, unknown>)

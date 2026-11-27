@@ -1,4 +1,5 @@
 import { formatP, type AuditResult } from "./verdict.js";
+import type { ExposureReport } from "./client.js";
 import type { PreflightInput, PreflightResult } from "./preflight.js";
 
 export function renderText(result: AuditResult): string {
@@ -28,6 +29,20 @@ export function renderText(result: AuditResult): string {
 
 export function renderJson(result: AuditResult): string {
   return JSON.stringify(result, null, 2);
+}
+
+export function renderExposures(report: ExposureReport): string {
+  const lines = ["EXPOSURES"];
+  if (report.asOf) lines.push(`  as of ${report.asOf}`);
+  for (const [variant, count] of Object.entries(report.perVariant)) {
+    lines.push(`  ${variant.padEnd(20)} ${count}`);
+  }
+  lines.push(`  excluded identities : ${report.excluded}`);
+  lines.push(`  time buckets        : ${report.buckets}`);
+  lines.push(
+    "  Upstream quarantines identities exposed to more than one variant; a nonzero count makes the result INVALID.",
+  );
+  return lines.join("\n");
 }
 
 export function renderPreflight(

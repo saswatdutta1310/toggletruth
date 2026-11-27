@@ -23,6 +23,14 @@ test("explicit CLI flags override environment credentials", () => {
   assert.equal(connection.token, "flag-token");
 });
 
+test("exposures demo reports per-variant counts and exclusions", async () => {
+  const result = await run(["exposures", "--demo"]);
+  assert.equal(result.exitCode, 0);
+  assert.match(result.stdout, /EXPOSURES/);
+  assert.match(result.stdout, /control/);
+  assert.match(result.stdout, /excluded/i);
+});
+
 test("demo broken scenario exits 1 and names both root causes", async () => {
   const result = await run(["check", "--demo", "--scenario", "broken"]);
   assert.equal(result.exitCode, 1);

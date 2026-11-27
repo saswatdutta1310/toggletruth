@@ -14,6 +14,20 @@ export const brokenExperiment: AuditInput = {
   ],
 };
 
+export const exposuresPayload = {
+  excluded_identities: 312,
+  as_of: new Date(Date.now() - 5 * 60_000).toISOString(),
+  timeseries: {
+    granularity: "day",
+    points: [
+      {
+        bucket: "2026-11-27",
+        new_identities: { control: 500, outcome_first: 150 },
+      },
+    ],
+  },
+};
+
 export const fixedExperiment: AuditInput = {
   featureName: "invite_cta",
   asOf: new Date(Date.now() - 5 * 60_000).toISOString(),

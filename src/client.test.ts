@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares, type FetchLike } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares, unwrapExposures, adaptExposures, type FetchLike } from "./client.js";
 
 test("client builds the management API URL and sends the token header", async () => {
   let seenUrl = "";
@@ -88,6 +88,32 @@ test("configuredShares reads multivariate allocations from experiment detail", (
 test("configuredShares returns undefined when no allocations are present", () => {
   assert.equal(configuredShares({ feature: { multivariate_options: [] } }), undefined);
   assert.equal(configuredShares({}), undefined);
+});
+
+test("adaptExposures sums the upstream ExposuresSummary shape", () => {
+  const response = {
+    exposures: {
+      as_of: "2026-11-27T18:00:00Z",
+      payload: {
+        excluded_identities: 12,
+        timeseries: {
+          granularity: "day",
+          points: [
+            { bucket: "2026-11-27", new_identities: { control: 40, treatment: 10 } },
+            { bucket: "2026-11-28", new_identities: { control: 60, treatment: 90 } },
+          ],
+        },
+      },
+    },
+  };
+  const report = adaptExposures(unwrapExposures(response));
+  assert.deepEqual(report.perVariant, { control: 100, treatment: 100 });
+  assert.equal(report.excluded, 12);
+  assert.equal(report.buckets, 2);
+});
+
+test("adaptExposures fails loudly on an unknown shape", () => {
+  assert.throws(() => adaptExposures({ mystery: true }), /Unsupported exposures/);
 });
 
 test("adaptPayload reads a results payload and fails loudly on an unknown shape", () => {

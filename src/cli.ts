@@ -1,7 +1,7 @@
-import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares } from "./client.js";
-import { brokenExperiment, fixedExperiment } from "./demo.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares, unwrapExposures, adaptExposures } from "./client.js";
+import { brokenExperiment, fixedExperiment, exposuresPayload } from "./demo.js";
 import { preflight, type PreflightInput } from "./preflight.js";
-import { renderJson, renderPreflight, renderText } from "./report.js";
+import { renderExposures, renderJson, renderPreflight, renderText } from "./report.js";
 import { audit, type AuditInput } from "./verdict.js";
 
 export interface CliResult {
@@ -52,6 +52,7 @@ const HELP = [
   "",
   "Commands:",
   "  check     audit an experiment",
+  "  exposures report per-variant exposure counts and exclusions",
   "  preflight estimate traffic needed before an experiment",
   "",
   "check options:",
@@ -134,6 +135,33 @@ async function runCheck(flags: Flags): Promise<CliResult> {
   };
 }
 
+async function runExposures(flags: Flags): Promise<CliResult> {
+  let payload: unknown;
+  if (flags.demo) {
+    payload = exposuresPayload;
+  } else {
+    const connection = resolveConnection(flags, process.env);
+    const environment = stringValue(flags, "environment");
+    const experiment = stringValue(flags, "experiment");
+    if (!connection.apiUrl || !connection.token || !environment || !experiment) {
+      return {
+        exitCode: 2,
+        stdout:
+          "exposures requires --environment and --experiment, plus --api-url/--token or FLAGSMITH_API_URL/FLAGSMITH_TOKEN (or use --demo)",
+      };
+    }
+    const client = new FlagsmithClient(connection.apiUrl, connection.token);
+    payload = unwrapExposures(
+      await client.exposures(environment, experiment),
+    );
+  }
+  const report = adaptExposures(payload);
+  return {
+    exitCode: 0,
+    stdout: flags.json ? JSON.stringify(report, null, 2) : renderExposures(report),
+  };
+}
+
 function runPreflight(flags: Flags): CliResult {
   const input: PreflightInput = {
     baseline: numberValue(flags, "baseline", 0.05),
@@ -159,6 +187,7 @@ export async function run(argv: string[]): Promise<CliResult> {
   const flags = parseFlags(argv.slice(1));
   try {
     if (command === "check") return await runCheck(flags);
+    if (command === "exposures") return await runExposures(flags);
     if (command === "preflight") return runPreflight(flags);
     return { exitCode: 0, stdout: HELP };
   } catch (error) {
