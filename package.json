@@ -1,0 +1,31 @@
+{
+  "name": "toggletruth",
+  "version": "0.1.0",
+  "description": "Independent experiment integrity checks for self-hosted Flagsmith.",
+  "type": "module",
+  "bin": {
+    "toggletruth": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "DISCLOSURE.md",
+    "action.yml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test dist/*.test.js",
+    "demo": "npm run build && node dist/index.js check --demo broken",
+    "check": "npm run typecheck && npm run build && npm test"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  }
+}

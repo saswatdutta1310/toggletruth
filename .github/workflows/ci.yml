@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - name: Verify deterministic broken scenario exits 1
+        run: |
+          set +e
+          node dist/index.js check --demo --scenario broken > /tmp/toggletruth-broken.txt
+          code=$?
+          set -e
+          test "$code" -eq 1
+          grep -q "VERDICT: INVALID" /tmp/toggletruth-broken.txt
+      - name: Verify deterministic fixed scenario exits 0
+        run: node dist/index.js check --demo --scenario fixed

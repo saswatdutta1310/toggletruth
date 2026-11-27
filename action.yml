@@ -1,0 +1,45 @@
+name: "ToggleTruth experiment gate"
+description: "Fail CI when a Flagsmith experiment result cannot be trusted."
+author: "Saswat Dutta"
+
+inputs:
+  api-url:
+    description: "Base URL of the self-hosted Flagsmith API"
+    required: true
+  token:
+    description: "Flagsmith master API token (pass via secrets)"
+    required: true
+  environment:
+    description: "Environment API key"
+    required: true
+  experiment:
+    description: "Experiment id"
+    required: true
+  expected-shares:
+    description: "Optional configured weights, e.g. 0.5,0.5"
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Build ToggleTruth
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm install --no-audit --no-fund && npm run build
+    - name: Audit experiment
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        FLAGSMITH_TOKEN: ${{ inputs.token }}
+        API_URL: ${{ inputs.api-url }}
+        ENVIRONMENT_KEY: ${{ inputs.environment }}
+        EXPERIMENT_ID: ${{ inputs.experiment }}
+        EXPECTED_SHARES: ${{ inputs.expected-shares }}
+      run: |
+        args=(check --api-url "$API_URL" --token "$FLAGSMITH_TOKEN" --environment "$ENVIRONMENT_KEY" --experiment "$EXPERIMENT_ID")
+        if [ -n "$EXPECTED_SHARES" ]; then args+=(--expected-shares "$EXPECTED_SHARES"); fi
+        node dist/index.js "${args[@]}"
