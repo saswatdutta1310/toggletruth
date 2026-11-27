@@ -55,8 +55,8 @@ const HELP = [
   "  preflight estimate traffic needed before an experiment",
   "",
   "check options:",
-  "  --api-url URL        self-hosted Flagsmith API base URL",
-  "  --token TOKEN        master API token (never logged or stored)",
+  "  --api-url URL        self-hosted Flagsmith API base URL (or FLAGSMITH_API_URL)",
+  "  --token TOKEN        master API token, never logged (or FLAGSMITH_TOKEN)",
   "  --environment KEY    environment API key",
   "  --experiment ID      experiment id",
   "  --expected-shares A,B  optional weights, e.g. 0.5,0.5",
@@ -68,6 +68,21 @@ const HELP = [
   "Exit codes: 0 trustworthy, 1 invalid, 2 inconclusive",
 ].join("\n");
 
+export interface Connection {
+  apiUrl: string;
+  token: string;
+}
+
+export function resolveConnection(
+  flags: Flags,
+  env: Record<string, string | undefined>,
+): Connection {
+  return {
+    apiUrl: stringValue(flags, "api-url") || env.FLAGSMITH_API_URL || "",
+    token: stringValue(flags, "token") || env.FLAGSMITH_TOKEN || "",
+  };
+}
+
 async function runCheck(flags: Flags): Promise<CliResult> {
   let input: AuditInput;
 
@@ -76,15 +91,16 @@ async function runCheck(flags: Flags): Promise<CliResult> {
       ...(flags.scenario === "fixed" ? fixedExperiment : brokenExperiment),
     };
   } else {
-    const apiUrl = stringValue(flags, "api-url");
-    const token = stringValue(flags, "token");
+    const connection = resolveConnection(flags, process.env);
+    const apiUrl = connection.apiUrl;
+    const token = connection.token;
     const environment = stringValue(flags, "environment");
     const experiment = stringValue(flags, "experiment");
     if (!apiUrl || !token || !environment || !experiment) {
       return {
         exitCode: 2,
         stdout:
-          "check requires --api-url, --token, --environment and --experiment (or use --demo)",
+          "check requires --environment and --experiment, plus --api-url/--token or FLAGSMITH_API_URL/FLAGSMITH_TOKEN (or use --demo)",
       };
     }
     const client = new FlagsmithClient(apiUrl, token);

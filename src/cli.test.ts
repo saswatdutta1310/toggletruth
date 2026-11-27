@@ -1,6 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { run } from "./cli.js";
+import { run, resolveConnection } from "./cli.js";
+
+test("credentials fall back to environment variables", () => {
+  const connection = resolveConnection(
+    { environment: "env-key", experiment: "7" },
+    {
+      FLAGSMITH_TOKEN: "env-token",
+      FLAGSMITH_API_URL: "http://localhost:8000",
+    },
+  );
+  assert.equal(connection.apiUrl, "http://localhost:8000");
+  assert.equal(connection.token, "env-token");
+});
+
+test("explicit CLI flags override environment credentials", () => {
+  const connection = resolveConnection(
+    { "api-url": "https://flagsmith.example", token: "flag-token" },
+    { FLAGSMITH_TOKEN: "env-token", FLAGSMITH_API_URL: "http://localhost:8000" },
+  );
+  assert.equal(connection.apiUrl, "https://flagsmith.example");
+  assert.equal(connection.token, "flag-token");
+});
 
 test("demo broken scenario exits 1 and names both root causes", async () => {
   const result = await run(["check", "--demo", "--scenario", "broken"]);
