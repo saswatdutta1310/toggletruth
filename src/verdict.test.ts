@@ -35,6 +35,25 @@ test("an interval spanning zero is INCONCLUSIVE", () => {
   assert.ok(result.reasons.some((reason) => reason.includes("spans zero")));
 });
 
+test("stale results are inconclusive even when the statistics look clean", () => {
+  const stale = {
+    ...fixedExperiment,
+    asOf: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+  };
+  const result = audit(stale);
+  assert.equal(result.verdict, "INCONCLUSIVE");
+  assert.ok(result.reasons.some((reason) => reason.includes("stale")));
+});
+
+test("a failed refresh does not produce a verdict from the last good payload", () => {
+  const result = audit({
+    ...fixedExperiment,
+    lastErrorAt: new Date().toISOString(),
+  });
+  assert.equal(result.verdict, "INCONCLUSIVE");
+  assert.ok(result.reasons.some((reason) => reason.includes("refresh failed")));
+});
+
 test("quarantined identities alone invalidate an otherwise clean experiment", () => {
   const result = audit({ ...fixedExperiment, quarantined: 1 });
   assert.equal(result.verdict, "INVALID");

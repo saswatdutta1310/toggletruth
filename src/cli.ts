@@ -1,4 +1,4 @@
-import { FlagsmithClient, adaptPayload, unwrapResults } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata } from "./client.js";
 import { brokenExperiment, fixedExperiment } from "./demo.js";
 import { preflight, type PreflightInput } from "./preflight.js";
 import { renderJson, renderPreflight, renderText } from "./report.js";
@@ -60,6 +60,7 @@ const HELP = [
   "  --environment KEY    environment API key",
   "  --experiment ID      experiment id",
   "  --expected-shares A,B  optional weights, e.g. 0.5,0.5",
+  "  --max-age-hours N    reject results older than N hours (default 24)",
   "  --demo               use deterministic fixtures (no network)",
   "  --scenario broken|fixed  demo scenario, default broken",
   "  --json               machine-readable output",
@@ -89,12 +90,17 @@ async function runCheck(flags: Flags): Promise<CliResult> {
     const client = new FlagsmithClient(apiUrl, token);
     const response = await client.results(environment, experiment);
     input = adaptPayload(unwrapResults(response));
+    const metadata = resultsMetadata(response);
+    if (metadata.asOf) input.asOf = metadata.asOf;
+    if (metadata.lastErrorAt) input.lastErrorAt = metadata.lastErrorAt;
   }
 
   const shares = stringValue(flags, "expected-shares");
   if (shares) {
     input.expectedShares = shares.split(",").map(Number);
   }
+  const maxAge = stringValue(flags, "max-age-hours");
+  if (maxAge) input.maxAgeHours = Number(maxAge);
 
   const result = audit(input);
   return {

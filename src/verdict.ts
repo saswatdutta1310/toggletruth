@@ -13,6 +13,8 @@ export interface AuditInput {
   quarantined: number;
   expectedShares?: number[];
   asOf?: string;
+  lastErrorAt?: string;
+  maxAgeHours?: number;
 }
 
 export type Verdict = "TRUSTWORTHY" | "INCONCLUSIVE" | "INVALID";
@@ -66,6 +68,25 @@ export function audit(input: AuditInput): AuditResult {
       exitCode: 2,
       reasons: ["Fewer than two variants were reported."],
     };
+  }
+
+  const freshness: string[] = [];
+  if (input.lastErrorAt) {
+    freshness.push(
+      `The last results refresh failed at ${input.lastErrorAt}; this payload is a saved copy, not a current result.`,
+    );
+  }
+  if (input.asOf) {
+    const ageMs = Date.now() - Date.parse(input.asOf);
+    const limitHours = input.maxAgeHours ?? 24;
+    if (Number.isFinite(ageMs) && ageMs > limitHours * 3_600_000) {
+      freshness.push(
+        `Results are stale: ${(ageMs / 3_600_000).toFixed(1)}h old, limit ${limitHours}h.`,
+      );
+    }
+  }
+  if (freshness.length > 0) {
+    return { ...base, verdict: "INCONCLUSIVE", exitCode: 2, reasons: freshness };
   }
 
   if (srm !== null && srm < SRM_THRESHOLD) {

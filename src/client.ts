@@ -57,6 +57,27 @@ export function unwrapResults(response: unknown): unknown {
   return response;
 }
 
+export interface ResultsMetadata {
+  asOf?: string;
+  lastErrorAt?: string;
+  isFinal?: boolean;
+}
+
+export function resultsMetadata(response: unknown): ResultsMetadata {
+  const root = asRecord(response);
+  if (!root) return {};
+  const wrapper = asRecord(root.results) ?? root;
+  const text = (key: string): string | undefined => {
+    const value = wrapper[key];
+    return typeof value === "string" && value ? value : undefined;
+  };
+  return {
+    asOf: text("as_of"),
+    lastErrorAt: text("last_error_at"),
+    isFinal: typeof wrapper.is_final === "boolean" ? wrapper.is_final : undefined,
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null
     ? (value as Record<string, unknown>)

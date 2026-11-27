@@ -5,7 +5,7 @@ import type { AuditInput } from "./verdict.js";
 
 export const brokenExperiment: AuditInput = {
   featureName: "invite_cta",
-  asOf: "2026-11-27T18:00:00Z",
+  asOf: new Date(Date.now() - 5 * 60_000).toISOString(),
   expectedShares: [0.5, 0.5],
   quarantined: 312,
   variants: [
@@ -16,7 +16,7 @@ export const brokenExperiment: AuditInput = {
 
 export const fixedExperiment: AuditInput = {
   featureName: "invite_cta",
-  asOf: "2026-11-28T09:00:00Z",
+  asOf: new Date(Date.now() - 5 * 60_000).toISOString(),
   expectedShares: [0.5, 0.5],
   quarantined: 0,
   variants: [

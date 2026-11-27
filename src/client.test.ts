@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FlagsmithClient, adaptPayload, unwrapResults, type FetchLike } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, type FetchLike } from "./client.js";
 
 test("client builds the management API URL and sends the token header", async () => {
   let seenUrl = "";
@@ -57,6 +57,20 @@ test("unwrapResults reads the live Flagsmith results envelope", () => {
   );
   assert.deepEqual(unwrapResults({ payload: inner }), inner);
   assert.deepEqual(unwrapResults(inner), inner);
+});
+
+test("resultsMetadata reads freshness fields from the live envelope", () => {
+  const metadata = resultsMetadata({
+    results: {
+      as_of: "2026-11-27T18:00:00Z",
+      last_error_at: null,
+      is_final: false,
+      payload: {},
+    },
+  });
+  assert.equal(metadata.asOf, "2026-11-27T18:00:00Z");
+  assert.equal(metadata.lastErrorAt, undefined);
+  assert.equal(metadata.isFinal, false);
 });
 
 test("adaptPayload reads a results payload and fails loudly on an unknown shape", () => {
