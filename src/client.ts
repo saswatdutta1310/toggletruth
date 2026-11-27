@@ -40,6 +40,12 @@ export class FlagsmithClient {
       `/api/v1/environments/${encodeURIComponent(environmentKey)}/experiments/${experimentId}/exposures/`,
     );
   }
+
+  experiment(environmentKey: string, experimentId: string | number) {
+    return this.get(
+      `/api/v1/environments/${encodeURIComponent(environmentKey)}/experiments/${experimentId}/`,
+    );
+  }
 }
 
 /**
@@ -76,6 +82,30 @@ export function resultsMetadata(response: unknown): ResultsMetadata {
     lastErrorAt: text("last_error_at"),
     isFinal: typeof wrapper.is_final === "boolean" ? wrapper.is_final : undefined,
   };
+}
+
+/**
+ * Reads `feature.multivariate_options[].default_percentage_allocation`, added by
+ * upstream's ExperimentFeatureSerializer. Opt-in because option order must be
+ * confirmed against a live results payload before it can drive a verdict.
+ */
+export function configuredShares(response: unknown): number[] | undefined {
+  const root = asRecord(response);
+  if (!root) return undefined;
+  const feature = asRecord(root.feature ?? root);
+  const options = feature?.multivariate_options;
+  if (!Array.isArray(options) || options.length < 2) return undefined;
+
+  const allocations = options.map((option) => {
+    const record = asRecord(option);
+    const value = record ? Number(record.default_percentage_allocation) : NaN;
+    return Number.isFinite(value) && value >= 0 ? value : NaN;
+  });
+  if (allocations.some((value) => !Number.isFinite(value))) return undefined;
+
+  const total = allocations.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return undefined;
+  return allocations.map((value) => value / total);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

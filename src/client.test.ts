@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, type FetchLike } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares, type FetchLike } from "./client.js";
 
 test("client builds the management API URL and sends the token header", async () => {
   let seenUrl = "";
@@ -71,6 +71,23 @@ test("resultsMetadata reads freshness fields from the live envelope", () => {
   assert.equal(metadata.asOf, "2026-11-27T18:00:00Z");
   assert.equal(metadata.lastErrorAt, undefined);
   assert.equal(metadata.isFinal, false);
+});
+
+test("configuredShares reads multivariate allocations from experiment detail", () => {
+  const shares = configuredShares({
+    feature: {
+      multivariate_options: [
+        { default_percentage_allocation: 50 },
+        { default_percentage_allocation: 50 },
+      ],
+    },
+  });
+  assert.deepEqual(shares, [0.5, 0.5]);
+});
+
+test("configuredShares returns undefined when no allocations are present", () => {
+  assert.equal(configuredShares({ feature: { multivariate_options: [] } }), undefined);
+  assert.equal(configuredShares({}), undefined);
 });
 
 test("adaptPayload reads a results payload and fails loudly on an unknown shape", () => {

@@ -1,4 +1,4 @@
-import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, resultsMetadata, configuredShares } from "./client.js";
 import { brokenExperiment, fixedExperiment } from "./demo.js";
 import { preflight, type PreflightInput } from "./preflight.js";
 import { renderJson, renderPreflight, renderText } from "./report.js";
@@ -60,6 +60,7 @@ const HELP = [
   "  --environment KEY    environment API key",
   "  --experiment ID      experiment id",
   "  --expected-shares A,B  optional weights, e.g. 0.5,0.5",
+  "  --auto-shares        read weights from Flagsmith (opt-in, confirm order live)",
   "  --max-age-hours N    reject results older than N hours (default 24)",
   "  --demo               use deterministic fixtures (no network)",
   "  --scenario broken|fixed  demo scenario, default broken",
@@ -85,6 +86,7 @@ export function resolveConnection(
 
 async function runCheck(flags: Flags): Promise<CliResult> {
   let input: AuditInput;
+  let autoShares: number[] | undefined;
 
   if (flags.demo) {
     input = {
@@ -109,11 +111,18 @@ async function runCheck(flags: Flags): Promise<CliResult> {
     const metadata = resultsMetadata(response);
     if (metadata.asOf) input.asOf = metadata.asOf;
     if (metadata.lastErrorAt) input.lastErrorAt = metadata.lastErrorAt;
+    if (flags["auto-shares"] && !stringValue(flags, "expected-shares")) {
+      autoShares = configuredShares(
+        await client.experiment(environment, experiment),
+      );
+    }
   }
 
   const shares = stringValue(flags, "expected-shares");
   if (shares) {
     input.expectedShares = shares.split(",").map(Number);
+  } else if (autoShares) {
+    input.expectedShares = autoShares;
   }
   const maxAge = stringValue(flags, "max-age-hours");
   if (maxAge) input.maxAgeHours = Number(maxAge);
