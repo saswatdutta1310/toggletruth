@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FlagsmithClient, adaptPayload, type FetchLike } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults, type FetchLike } from "./client.js";
 
 test("client builds the management API URL and sends the token header", async () => {
   let seenUrl = "";
@@ -42,6 +42,21 @@ test("client surfaces an HTTP error without echoing the token", async () => {
     () => client.exposures("env-key", 7),
     (error: Error) => !error.message.includes("secret-value"),
   );
+});
+
+test("unwrapResults reads the live Flagsmith results envelope", () => {
+  const inner = {
+    variants: [
+      { name: "control", n: 10, conversions: 1 },
+      { name: "treatment", n: 10, conversions: 2 },
+    ],
+  };
+  assert.deepEqual(
+    unwrapResults({ results: { as_of: "2026-11-27T18:00:00Z", payload: inner } }),
+    inner,
+  );
+  assert.deepEqual(unwrapResults({ payload: inner }), inner);
+  assert.deepEqual(unwrapResults(inner), inner);
 });
 
 test("adaptPayload reads a results payload and fails loudly on an unknown shape", () => {

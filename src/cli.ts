@@ -1,4 +1,4 @@
-import { FlagsmithClient, adaptPayload } from "./client.js";
+import { FlagsmithClient, adaptPayload, unwrapResults } from "./client.js";
 import { brokenExperiment, fixedExperiment } from "./demo.js";
 import { preflight, type PreflightInput } from "./preflight.js";
 import { renderJson, renderPreflight, renderText } from "./report.js";
@@ -87,10 +87,8 @@ async function runCheck(flags: Flags): Promise<CliResult> {
       };
     }
     const client = new FlagsmithClient(apiUrl, token);
-    const response = (await client.results(environment, experiment)) as {
-      payload?: unknown;
-    };
-    input = adaptPayload(response.payload ?? response);
+    const response = await client.results(environment, experiment);
+    input = adaptPayload(unwrapResults(response));
   }
 
   const shares = stringValue(flags, "expected-shares");

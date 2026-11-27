@@ -42,6 +42,21 @@ export class FlagsmithClient {
   }
 }
 
+/**
+ * Upstream `views.py` wraps results as `{"results": {..., "payload": ...}}`.
+ * Accept that shape, the older `{payload: ...}` shape, and an already-unwrapped
+ * payload, so the demo fixture and a live instance follow the same path.
+ */
+export function unwrapResults(response: unknown): unknown {
+  const root = asRecord(response);
+  if (!root) return response;
+  const wrapper = asRecord(root.results);
+  if (wrapper && "payload" in wrapper) return wrapper.payload;
+  if ("payload" in root) return root.payload;
+  if (root.results !== undefined) return root.results;
+  return response;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null
     ? (value as Record<string, unknown>)
